@@ -25,7 +25,7 @@ class SearchComponent extends Component {
 		$Model = $this->controller->$modelClass;
 		$schema = $Model->schema();
 		$q = $this->controller->request->query('q');
-		foreach(array_keys($this->controller->$modelClass->validate) as $fieldname) {
+		foreach(array_keys($Model->validate) as $fieldname) {
 			if(in_array($fieldname,array('id','password'))) continue;
 			$conditionField = $modelClass.'.'.$fieldname;
 			$fieldValue = $this->controller->request->query($fieldname);
@@ -47,8 +47,35 @@ class SearchComponent extends Component {
 				}
 			}
 		}
+		foreach(array('belongsTo','hasOne') as $relation) {
+			foreach($Model->$relation as $alias=>$assocData) {
+				$assocSchema = $Model->$alias->schema();
+				foreach(array_keys($Model->$alias->validate) as $fieldname) {
+					if(in_array($fieldname,array('id','password'))) continue;
+					$conditionField = $alias.'.'.$fieldname;
+					$fieldValue = $this->controller->request->query($conditionField);
+					if($fieldValue!==null && $fieldValue!=='') {
+						if(is_array($fieldValue)) {
+							$conditions[]['OR'][$conditionField]=$fieldValue;
+						} elseif(in_array($assocSchema[$fieldname]['type'],array('string','text'))) {
+							$conditions[$conditionField.' LIKE']='%'.$fieldValue.'%';
+						} else {
+							$conditions[$conditionField]=$fieldValue;
+						}
+						continue;
+					}
+					if($q!==null && $q!=='') {
+						if(in_array($assocSchema[$fieldname]['type'],array('string','text','date','time','datetime'))) {
+							$conditions['OR'][$conditionField.' LIKE']='%'.$q.'%';
+						} elseif($q>0) {
+							$conditions['OR'][$conditionField]=$q;
+						}
+					}
+				}
+			}
+		}
 		$ids = array();
-		foreach($this->controller->$modelClass->hasAndBelongsToMany as $alias=>$assocData) {
+		foreach($Model->hasAndBelongsToMany as $alias=>$assocData) {
 			$fieldValue = $this->controller->request->query($alias);
 			if($fieldValue!==null && $fieldValue!=='') {
                 list($widthplugin,$widthmodelname) = pluginSplit($assocData['with']);
@@ -61,11 +88,11 @@ class SearchComponent extends Component {
 			break;
 		
 			case 1:
-				$conditions[$modelClass.'.'.$this->controller->$modelClass->primaryKey]=$ids[0];
+				$conditions[$modelClass.'.'.$Model->primaryKey]=$ids[0];
 			break;
 			
 			default:
-				$conditions[$modelClass.'.'.$this->controller->$modelClass->primaryKey]=call_user_func_array('array_intersect',$ids);
+				$conditions[$modelClass.'.'.$Model->primaryKey]=call_user_func_array('array_intersect',$ids);
 			break;
 		}
 

@@ -75,6 +75,16 @@ class SearchComponent extends Component {
 			}
 		}
 		$ids = array();
+		foreach($Model->hasMany as $alias=>$assocData) {
+			$fieldValue = $this->controller->request[$alias]?:$this->controller->request->query($alias);
+			if($fieldValue!==null && $fieldValue!=='') {
+				$ids[]=$Model->$alias->find('list',array('fields'=>$alias.'.'.$assocData['foreignKey'],'conditions'=>array_merge(array($alias.'.'.$Model->$alias->primaryKey=>$fieldValue), $assocData['conditions']?:array())));
+			}
+			if($q!==null && $q!=='') {
+				$ids[]=$Model->$alias->find('list',array('fields'=>$alias.'.'.$assocData['foreignKey'],'conditions'=>array_merge(array($alias.'.'.$Model->$alias->displayField.' LIKE'=>'%'.$q.'%'), $assocData['conditions']?:array())));
+			}
+		}
+
 		foreach($Model->hasAndBelongsToMany as $alias=>$assocData) {
 			$fieldValue = $this->controller->request[$alias]?:$this->controller->request->query($alias);
 			if($fieldValue!==null && $fieldValue!=='') {

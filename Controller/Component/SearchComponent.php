@@ -92,6 +92,12 @@ class SearchComponent extends Component {
                 if(empty($Model->$widthmodelname)) throw new InternalErrorException(__('%s model has invalid relation with %s model',$Model->alias,$assocData['with']));
 				$ids[]=$Model->$widthmodelname->find('list',array('fields'=>$widthmodelname.'.'.$assocData['foreignKey'],'conditions'=>array_merge(array($widthmodelname.'.'.$assocData['associationForeignKey']=>$fieldValue), $assocData['conditions']?:array())));
 			}
+			if($q!==null && $q!=='') {
+				list($widthplugin,$widthmodelname) = pluginSplit($assocData['with']);
+				if(empty($Model->$widthmodelname)) throw new InternalErrorException(__('%s model has invalid relation with %s model',$Model->alias,$assocData['with']));
+				$ids[]=$Model->$widthmodelname->find('list',array('fields'=>$widthmodelname.'.'.$assocData['foreignKey'],'conditions'=>array_merge(array($widthmodelname.'.'.$Model->$widthmodelname->displayField=>$fieldValue), $assocData['conditions']?:array())));
+			}
+
 		}
 		switch(count($ids)) {
 			case 0:
@@ -102,7 +108,7 @@ class SearchComponent extends Component {
 			break;
 			
 			default:
-				$conditions[$modelClass.'.'.$Model->primaryKey]=call_user_func_array('array_intersect',$ids);
+				$conditions[$modelClass.'.'.$Model->primaryKey]=call_user_func_array($this->controller->request->query('q')?'array_merge':'array_intersect',$ids);
 			break;
 		}
 

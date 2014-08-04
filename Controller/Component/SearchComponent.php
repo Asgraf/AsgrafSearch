@@ -13,7 +13,7 @@ class SearchComponent extends Component {
 	public function initialize(Controller $controller) {
 		$this->controller = $controller;
 	}
-	
+
 	public function getSearchConditions() {
 		$conditions = array();
 		$modelClass = $this->controller->modelClass;
@@ -24,11 +24,11 @@ class SearchComponent extends Component {
 		 */
 		$Model = $this->controller->$modelClass;
 		$schema = $Model->schema();
-		$q = $this->controller->request['q']?:$this->controller->request->query('q');
+		$q = $this->controller->request->param('q')?:$this->controller->request->query('q');
 		foreach(array_keys($Model->validate) as $fieldname) {
 			if(in_array($fieldname,array('id','password'))) continue;
 			$conditionField = $modelClass.'.'.$fieldname;
-			$fieldValue = $this->controller->request[$fieldname]?:$this->controller->request->query($fieldname);
+			$fieldValue = $this->controller->request->param($fieldname)?:$this->controller->request->query($fieldname);
 			if($fieldValue!==null && $fieldValue!=='') {
 				if(is_array($fieldValue)) {
 					$conditions[]['OR'][$conditionField]=$fieldValue;
@@ -53,7 +53,7 @@ class SearchComponent extends Component {
 				foreach(array_keys($Model->$alias->validate) as $fieldname) {
 					if(in_array($fieldname,array('id','password'))) continue;
 					$conditionField = $alias.'.'.$fieldname;
-					$fieldValue = $this->controller->request[$conditionField]?:$this->controller->request->query($conditionField);
+					$fieldValue = $this->controller->request->param($conditionField)?:$this->controller->request->query($conditionField);
 					if($fieldValue!==null && $fieldValue!=='') {
 						if(is_array($fieldValue)) {
 							$conditions[]['OR'][$conditionField]=$fieldValue;
@@ -76,7 +76,7 @@ class SearchComponent extends Component {
 		}
 		$ids = array();
 		foreach($Model->hasMany as $alias=>$assocData) {
-			$fieldValue = $this->controller->request[$alias]?:$this->controller->request->query($alias);
+			$fieldValue = $this->controller->request->param($alias)?:$this->controller->request->query($alias);
 			if($fieldValue!==null && $fieldValue!=='') {
 				$ids[]=$Model->$alias->find('list',array('fields'=>$alias.'.'.$assocData['foreignKey'],'conditions'=>array_merge(array($alias.'.'.$Model->$alias->primaryKey=>$fieldValue), $assocData['conditions']?:array())));
 			}
@@ -86,7 +86,7 @@ class SearchComponent extends Component {
 		}
 
 		foreach($Model->hasAndBelongsToMany as $alias=>$assocData) {
-			$fieldValue = $this->controller->request[$alias]?:$this->controller->request->query($alias);
+			$fieldValue = $this->controller->request->param($alias)?:$this->controller->request->query($alias);
 			if($fieldValue!==null && $fieldValue!=='') {
                 list($widthplugin,$widthmodelname) = pluginSplit($assocData['with']);
                 if(empty($Model->$widthmodelname)) throw new InternalErrorException(__('%s model has invalid relation with %s model',$Model->alias,$assocData['with']));

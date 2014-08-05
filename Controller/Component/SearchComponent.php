@@ -64,7 +64,7 @@ class SearchComponent extends Component {
 						}
 						continue;
 					}
-					if($q!==null && $q!=='') {
+					if($q!==null && $q!=='' && $assocData['foreignKey']!='parent_id') {
 						if(in_array($assocSchema[$fieldname]['type'],array('string','text','date','time','datetime'))) {
 							$conditions['OR'][$conditionField.' LIKE']='%'.$q.'%';
 						} elseif($q>0) {
@@ -80,7 +80,7 @@ class SearchComponent extends Component {
 			if($fieldValue!==null && $fieldValue!=='') {
 				$ids[]=$Model->$alias->find('list',array('fields'=>$alias.'.'.$assocData['foreignKey'],'conditions'=>array_merge(array($alias.'.'.$Model->$alias->primaryKey=>$fieldValue), $assocData['conditions']?:array())));
 			}
-			if($q!==null && $q!=='') {
+			if($q!==null && $q!=='' && $assocData['foreignKey']!='parent_id') {
 				$ids[]=$Model->$alias->find('list',array('fields'=>$alias.'.'.$assocData['foreignKey'],'conditions'=>array_merge(array($alias.'.'.$Model->$alias->displayField.' LIKE'=>'%'.$q.'%'), $assocData['conditions']?:array())));
 			}
 		}

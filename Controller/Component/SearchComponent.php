@@ -99,17 +99,25 @@ class SearchComponent extends Component {
 			}
 
 		}
+		$conds = array();
 		switch(count($ids)) {
 			case 0:
 			break;
 		
 			case 1:
-				$conditions[$modelClass.'.'.$Model->primaryKey]=$ids[0];
+				$conds[$modelClass.'.'.$Model->primaryKey]=$ids[0];
 			break;
 			
 			default:
-				$conditions[$modelClass.'.'.$Model->primaryKey]=call_user_func_array($this->controller->request->query('q')?'array_merge':'array_intersect',$ids);
+				$conds[$modelClass.'.'.$Model->primaryKey]=call_user_func_array($this->controller->request->query('q')?'array_merge':'array_intersect',$ids);
 			break;
+		}
+		if(!empty($conds)) {
+			if($q!==null && $q!=='') {
+				$conditions['OR']=(Hash::get($conditions,'OR')?:array())+$conds;
+			} else {
+				$conditions+=$conds;
+			}
 		}
 
 		return $conditions;

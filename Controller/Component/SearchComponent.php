@@ -28,12 +28,11 @@ class SearchComponent extends Component {
 		$q = $this->controller->request->param('q')?:$this->controller->request->query('q');
 		$searchFieldsWhitelist = ($q!==null && $q!=='')?$universalSearchFieldsWhitelist:$advancedSearchFieldsWhitelist;
 		if(empty($searchFieldsWhitelist) || in_array($modelClass,$searchFieldsWhitelist)) {
-			$searchFields = array_keys($Model->validate);
+			$searchFields = array_diff(array_keys($Model->validate),array('id','password'));
 		} else {
 			$searchFields = Hash::get($searchFieldsWhitelist,$modelClass)?:array();
 		}
 		foreach($searchFields as $fieldname) {
-			if((!empty($searchFieldsWhitelist) || in_array($modelClass,$searchFieldsWhitelist)) && in_array($fieldname,array('id','password'))) continue;
 			$conditionField = $modelClass.'.'.$fieldname;
 			$fieldValue = $this->controller->request->param($fieldname)?:$this->controller->request->query($fieldname);
 			if($fieldValue!==null && $fieldValue!=='') {
@@ -57,14 +56,13 @@ class SearchComponent extends Component {
 		foreach(array('belongsTo','hasOne') as $relation) {
 			foreach($Model->$relation as $alias=>$assocData) {
 				if(empty($searchFieldsWhitelist) || in_array($alias,$searchFieldsWhitelist)) {
-					$searchFields = array_keys($Model->$alias->validate);
+					$searchFields = array_diff(array_keys($Model->$alias->validate),array('id','password'));
 				} else {
 					$searchFields = Hash::get($searchFieldsWhitelist,$alias);
 				}
 				if(empty($searchFields)) continue;
 				$assocSchema = $Model->$alias->schema();
 				foreach($searchFields as $fieldname) {
-					if((!empty($searchFieldsWhitelist) || in_array($alias,$searchFieldsWhitelist)) && in_array($fieldname,array('id','password'))) continue;
 					$conditionField = $alias.'.'.$fieldname;
 					$fieldValue = $this->controller->request->param($conditionField)?:$this->controller->request->query($conditionField);
 					if($fieldValue!==null && $fieldValue!=='') {
@@ -99,7 +97,7 @@ class SearchComponent extends Component {
 				$ids[]=$Model->$alias->find('list',array('fields'=>$alias.'.'.$assocData['foreignKey'],'conditions'=>array_merge(array($alias.'.'.$Model->$alias->displayField.' LIKE'=>'%'.$q.'%'), $assocData['conditions']?:array())));
 			}
 			if(in_array($alias,$searchFieldsWhitelist)) {
-				$searchFields = array_keys($Model->$alias->validate);
+				$searchFields = array_diff(array_keys($Model->$alias->validate),array('id','password'));
 			} else {
 				$searchFields = Hash::get($searchFieldsWhitelist,$alias);
 			}
@@ -143,7 +141,7 @@ class SearchComponent extends Component {
 				}
 			}
 			if(in_array($alias,$searchFieldsWhitelist)) {
-				$searchFields = array_keys($Model->$alias->validate);
+				$searchFields = array_diff(array_keys($Model->$alias->validate),array('id','password'));
 			} else {
 				$searchFields = Hash::get($searchFieldsWhitelist,$alias);
 			}

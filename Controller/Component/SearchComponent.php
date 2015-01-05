@@ -32,11 +32,14 @@ class SearchComponent extends Component {
 		} else {
 			$searchFields = Hash::get($searchFieldsWhitelist,$modelClass)?:array();
 		}
+		$ids = array();
 		foreach($searchFields as $fieldname) {
 			$conditionField = $modelClass.'.'.$fieldname;
 			$fieldValue = $this->controller->request->param($fieldname)?:$this->controller->request->query($fieldname);
 			if($fieldValue!==null && $fieldValue!=='') {
-				if(is_array($fieldValue)) {
+				if($fieldname==$Model->primaryKey) {
+					$ids[]=(array)$fieldValue;
+				} elseif(is_array($fieldValue)) {
 					$conditions[]['OR'][$conditionField]=$fieldValue;
 				} elseif(in_array($schema[$fieldname]['type'],array('string','text'))) {
 					$conditions[$conditionField.' LIKE']='%'.$fieldValue.'%';
@@ -46,7 +49,9 @@ class SearchComponent extends Component {
 				continue;
 			}
 			if($q!==null && $q!=='') {
-				if(in_array($schema[$fieldname]['type'],array('string','text','date','time','datetime'))) {
+				if($fieldname==$Model->primaryKey) {
+					$ids[]=(array)$q;
+				} elseif(in_array($schema[$fieldname]['type'],array('string','text','date','time','datetime'))) {
 					$conditions['OR'][$conditionField.' LIKE']='%'.$q.'%';
 				} elseif($q>0) {
 					$conditions['OR'][$conditionField]=$q;
@@ -85,7 +90,6 @@ class SearchComponent extends Component {
 				}
 			}
 		}
-		$ids = array();
 		foreach($Model->hasMany as $alias=>$assocData) {
 			$fieldValue = $this->controller->request->param($alias)?:$this->controller->request->query($alias);
 			if($fieldValue!==null && $fieldValue!=='' && !is_array($fieldValue)) {
@@ -126,7 +130,7 @@ class SearchComponent extends Component {
 					}
 				}
 				if(!empty($assocConds)) {
-					$ids[]=$Model->$alias->find('list',array('fields'=>$alias.'.'.$assocData['foreignKey'],'conditions'=>$assocConds));
+					$ids[]=$test=$Model->$alias->find('list',array('fields'=>$alias.'.'.$assocData['foreignKey'],'conditions'=>$assocConds));
 				}
 			}
 		}

@@ -157,7 +157,7 @@ class SearchComponent extends Component {
 				foreach($searchFields as $fieldname) {
 					$conditionField = $alias.'.'.$fieldname;
 					$fieldValue = $this->controller->request->param($conditionField)?:$this->controller->request->query($conditionField);
-					if(empty($fieldValue) && $fieldname==$Model->$alias->displayField) $fieldValue =$this->controller->request->param($alias)?:$this->controller->request->query($alias);
+					if(empty($fieldValue) && in_array($fieldname,array($Model->$alias->primaryKey,$Model->$alias->displayField))) $fieldValue =$this->controller->request->param($alias)?:$this->controller->request->query($alias);
 					if($fieldValue!==null && $fieldValue!=='') {
 						if(is_array($fieldValue)) {
 							$assocConds[]['OR'][$conditionField]=$fieldValue;

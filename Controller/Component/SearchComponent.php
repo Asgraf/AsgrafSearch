@@ -81,7 +81,9 @@ class SearchComponent extends Component {
 						continue;
 					}
 					if($q!==null && $q!=='' && $assocData['foreignKey']!='parent_id') {
-						if(in_array($assocSchema[$fieldname]['type'],array('string','text','date','time','datetime'))) {
+						if(array_key_exists($fieldname,$Model->$alias->virtualFields)) {
+							$conditions['OR'][$Model->$alias->virtualFields[$fieldname].' LIKE']='%'.$q.'%';
+						} elseif(!in_array($assocSchema[$fieldname]['type'],array('string','text','date','time','datetime'))) {
 							$conditions['OR'][$conditionField.' LIKE']='%'.$q.'%';
 						} elseif($q>0) {
 							$conditions['OR'][$conditionField]=$q;

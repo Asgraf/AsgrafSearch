@@ -200,6 +200,7 @@ class SearchComponent extends Component {
 		}
 		if(!empty($conds)) {
 			if($q!==null && $q!=='') {
+				$conds = array_filter($conds);
 				$conditions['OR']=(Hash::get($conditions,'OR')?:array())+$conds;
 			} else {
 				$conditions+=$conds;

@@ -25,7 +25,7 @@ class SearchComponent extends Component {
 		 */
 		$Model = $this->controller->$modelClass;
 		$schema = $Model->schema();
-		$q = $this->controller->request->param('q')?:$this->controller->request->query('q');
+		$q = $this->controller->request->param('q')?:$this->controller->request->data('q')?:$this->controller->request->query('q');
 		$searchFieldsWhitelist = ($q!==null && $q!=='')?$universalSearchFieldsWhitelist:$advancedSearchFieldsWhitelist;
 		if(empty($searchFieldsWhitelist) || in_array($modelClass,$searchFieldsWhitelist)) {
 			$searchFields = array_diff(array_keys($Model->validate),array('id','password'));
@@ -35,7 +35,7 @@ class SearchComponent extends Component {
 		$ids = array();
 		foreach($searchFields as $fieldname) {
 			$conditionField = $modelClass.'.'.$fieldname;
-			$fieldValue = $this->controller->request->param($fieldname)?:$this->controller->request->query($fieldname);
+			$fieldValue = $this->controller->request->param($fieldname)?:$this->controller->request->data($fieldname)?:$this->controller->request->query($fieldname);
 			if($fieldValue!==null && $fieldValue!=='') {
 				if($fieldname==$Model->primaryKey) {
 					$ids[]=(array)$fieldValue;
@@ -69,7 +69,7 @@ class SearchComponent extends Component {
 				$assocSchema = $Model->$alias->schema();
 				foreach($searchFields as $fieldname) {
 					$conditionField = $alias.'.'.$fieldname;
-					$fieldValue = $this->controller->request->param($conditionField)?:$this->controller->request->query($conditionField);
+					$fieldValue = $this->controller->request->param($conditionField)?:$this->controller->request->data($conditionField)?:$this->controller->request->query($conditionField);
 					if($fieldValue!==null && $fieldValue!=='') {
 						if(is_array($fieldValue)) {
 							$conditions[]['OR'][$conditionField]=$fieldValue;
@@ -93,7 +93,7 @@ class SearchComponent extends Component {
 			}
 		}
 		foreach($Model->hasMany as $alias=>$assocData) {
-			$fieldValue = $this->controller->request->param($alias)?:$this->controller->request->query($alias);
+			$fieldValue = $this->controller->request->param($alias)?:$this->controller->request->data($alias)?:$this->controller->request->query($alias);
 			if($fieldValue!==null && $fieldValue!=='' && !is_array($fieldValue)) {
 				if(!(!empty($searchFieldsWhitelist) && !in_array($alias,$searchFieldsWhitelist) && !in_array($Model->$alias->primaryKey,Hash::get($searchFieldsWhitelist,$alias)?:array()))) {
 					$ids[]=$Model->$alias->find('list',array('fields'=>$alias.'.'.$assocData['foreignKey'],'conditions'=>array_merge(array($alias.'.'.$Model->$alias->primaryKey=>$fieldValue), $assocData['conditions']?:array())));
@@ -112,7 +112,7 @@ class SearchComponent extends Component {
 				$assocConds = array();
 				foreach($searchFields as $fieldname) {
 					$conditionField = $alias.'.'.$fieldname;
-					$fieldValue = $this->controller->request->param($conditionField)?:$this->controller->request->query($conditionField);
+					$fieldValue = $this->controller->request->param($conditionField)?:$this->controller->request->data($conditionField)?:$this->controller->request->query($conditionField);
 					if($fieldValue!==null && $fieldValue!=='') {
 						if(is_array($fieldValue)) {
 							$assocConds[]['OR'][$conditionField]=$fieldValue;
@@ -138,7 +138,7 @@ class SearchComponent extends Component {
 		}
 
 		foreach($Model->hasAndBelongsToMany as $alias=>$assocData) {
-			$fieldValue = $this->controller->request->param($alias)?:$this->controller->request->query($alias);
+			$fieldValue = $this->controller->request->param($alias)?:$this->controller->request->data($alias)?:$this->controller->request->query($alias);
 			if($fieldValue!==null && $fieldValue!=='' && !is_array($fieldValue)) {
 				if(!(!empty($searchFieldsWhitelist) && !in_array($alias,$searchFieldsWhitelist) && !in_array($Model->$alias->primaryKey,Hash::get($searchFieldsWhitelist,$alias)?:array()))) {
 					list($widthplugin,$widthmodelname) = pluginSplit($assocData['with']);
@@ -158,8 +158,8 @@ class SearchComponent extends Component {
 				$assocConds = array();
 				foreach($searchFields as $fieldname) {
 					$conditionField = $alias.'.'.$fieldname;
-					$fieldValue = $this->controller->request->param($conditionField)?:$this->controller->request->query($conditionField);
-					if(empty($fieldValue) && in_array($fieldname,array($Model->$alias->primaryKey,$Model->$alias->displayField))) $fieldValue =$this->controller->request->param($alias)?:$this->controller->request->query($alias);
+					$fieldValue = $this->controller->request->param($conditionField)?:$this->controller->request->data($conditionField)?:$this->controller->request->query($conditionField);
+					if(empty($fieldValue) && in_array($fieldname,array($Model->$alias->primaryKey,$Model->$alias->displayField))) $fieldValue =$this->controller->request->param($alias)?:$this->controller->request->data($alias)?:$this->controller->request->query($alias);
 					if($fieldValue!==null && $fieldValue!=='') {
 						if(is_array($fieldValue)) {
 							$assocConds[]['OR'][$conditionField]=$fieldValue;
@@ -195,7 +195,7 @@ class SearchComponent extends Component {
 			break;
 			
 			default:
-				$conds[$modelClass.'.'.$Model->primaryKey]=array_unique(call_user_func_array($this->controller->request->query('q')?'array_merge':'array_intersect',$ids));
+				$conds[$modelClass.'.'.$Model->primaryKey]=array_unique(call_user_func_array(($this->controller->request->data('q')?:$this->controller->request->query('q'))?'array_merge':'array_intersect',$ids));
 			break;
 		}
 		if(!empty($conds)) {
@@ -209,4 +209,4 @@ class SearchComponent extends Component {
 
 		return $conditions;
 	}
-} 
+}
